@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Startup Quiz - Set Selector</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f0f8ff;
+      padding: 30px;
+      text-align: center;
+    }
+    .set-button {
+      margin: 10px;
+      padding: 12px 24px;
+      font-size: 18px;
+      display: none; /* initially hidden */
+    }
+    #quizContainer {
+      margin-top: 30px;
+      padding: 20px;
+      border: 2px dashed #999;
+      background: #fff;
+    }
+    .question {
+      margin-bottom: 20px;
+    }
+    .options label {
+      display: block;
+      margin: 5px 0;
+      cursor: pointer;
+    }
+    #timer {
+      font-size: 20px;
+      font-weight: bold;
+      color: red;
+      margin: 10px;
+    }
+    #result {
+      font-size: 22px;
+      font-weight: bold;
+      color: green;
+      margin-top: 20px;
+    }
+    .correct {
+      color: green;
+    }
+    .wrong {
+      color: red;
+    }
+    #setName {
+      font-size: 20px;
+      margin-bottom: 10px;
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+  <h2>Startup Club Quiz</h2>
+  <button onclick="generateSet()" class="set-button" style="display: inline-block">🎲 Generate Random Set</button>
+
+  <div id="quizContainer">
+    <div id="setName"></div>
+    <div id="timer"></div>
+    <form id="quizForm"></form>
+    <button onclick="submitQuiz()" class="set-button" style="display:inline-block">Submit</button>
+    <div id="result"></div>
+  </div>
+
+  <script>
+    const sets = {
+      1: [
+        { q: "Amul", a: "The Taste of India" },
+        { q: "Facebook", a: "More Together" },
+        { q: "Redbull", a: "Gives You Wings" },
+        { q: "Pepsi", a: "For the Love of It" },
+        { q: "Denver", a: "The Scent of My Success" },
+        { q: "Kingfisher", a: "The King of Good Times" },
+        { q: "Apple", a: "Think Different" },
+        { q: "Spotify", a: "Listening is Everywhere" },
+        { q: "Coca-Cola", a: "Open Happiness" },
+        { q: "Netflix", a: "See What's Next" }
+      ],
+      2: [
+        { q: "Paytm", a: "Paytm Karo" },
+        { q: "Royal Enfield", a: "Made Like a Gun" },
+        { q: "Adidas", a: "Impossible is Nothing" },
+        { q: "McDonald's", a: "I'm Lovin' It" },
+        { q: "Vimal", a: "Palukulalo Kesari" },
+        { q: "Loreal Paris", a: "Because I'm Worth It" },
+        { q: "KFC", a: "It's Finger Lickin' Good" },
+        { q: "Perk", a: "Take It Light" },
+        { q: "Kitkat", a: "Have a Break, Have a Kitkat" },
+        { q: "Five Star", a: "Do Nothing" }
+      ],
+      3: [
+        { q: "Uber", a: "Move the Way You Want" },
+        { q: "Walkmate", a: "Walk with Comfort" },
+        { q: "Bata", a: "Shoes for All" },
+        { q: "Burger King", a: "Have It Your Way" },
+        { q: "Freedom", a: "Freedom to Eat, Freedom to Enjoy" },
+        { q: "Google", a: "Do the Right Thing" },
+        { q: "Rolls-Royce", a: "Inspiring Greatness" },
+        { q: "Rapido", a: "Ride Solo" },
+        { q: "Arul", a: "Just Slice It" },
+        { q: "Nike", a: "Just Do It" }
+      ]
+    };
+
+    let currentSet = [];
+    let timerInterval;
+    let timeLeft = 60;
+
+    function generateSet() {
+      const keys = Object.keys(sets);
+      const randomSetKey = keys[Math.floor(Math.random() * keys.length)];
+      const availableQuestions = [...sets[randomSetKey]];
+      const questions = [];
+      for (let i = 0; i < 3; i++) {
+        const randomIndex = Math.floor(Math.random() * availableQuestions.length);
+        questions.push(availableQuestions.splice(randomIndex, 1)[0]);
+      }
+      loadSet(randomSetKey, questions);
+    }
+
+    function loadSet(setNum, questions) {
+      currentSet = questions;
+      timeLeft = 60;
+      document.getElementById("setName").innerText = `You are taking: SET ${setNum}`;
+      document.getElementById("result").innerText = "";
+      document.getElementById("quizForm").innerHTML = "";
+      document.getElementById("timer").innerText = `Time: ${timeLeft}s`;
+      clearInterval(timerInterval);
+      timerInterval = setInterval(updateTimer, 1000);
+
+      currentSet.forEach((item, index) => {
+        const allOptions = shuffle([
+          item.a,
+          ...getRandomWrongAnswers(item.a)
+        ]);
+        const qDiv = document.createElement("div");
+        qDiv.className = "question";
+        qDiv.innerHTML = `
+          <p><b>${index + 1}. What is the tagline of ${item.q}?</b></p>
+          <div class="options">
+            ${allOptions.map(opt => `
+              <label><input type="radio" name="q${index}" value="${opt}"> ${opt}</label>
+            `).join("")}
+          </div>
+        `;
+        document.getElementById("quizForm").appendChild(qDiv);
+      });
+    }
+
+    function updateTimer() {
+      timeLeft--;
+      document.getElementById("timer").innerText = `Time: ${timeLeft}s`;
+      if (timeLeft <= 0) {
+        clearInterval(timerInterval);
+        submitQuiz();
+      }
+    }
+
+    function submitQuiz() {
+      clearInterval(timerInterval);
+      let score = 0;
+      let resultHTML = "<h3>Results:</h3>";
+
+      currentSet.forEach((item, i) => {
+        const selected = document.querySelector(`input[name='q${i}']:checked`);
+        const correctAnswer = item.a;
+
+        if (selected) {
+          if (selected.value === correctAnswer) {
+            score++;
+            resultHTML += `<p class='correct'>Q${i + 1}: ✅ Correct (${item.q} → ${correctAnswer})</p>`;
+          } else {
+            resultHTML += `<p class='wrong'>Q${i + 1}: ❌ Wrong (Your Answer: ${selected.value}, Correct: ${correctAnswer})</p>`;
+          }
+        } else {
+          resultHTML += `<p class='wrong'>Q${i + 1}: ❌ Unanswered (Correct: ${correctAnswer})</p>`;
+        }
+      });
+
+      resultHTML += `<h3 class='result'>Your Score: ${score} / ${currentSet.length}</h3>`;
+      document.getElementById("result").innerHTML = resultHTML;
+    }
+
+    function shuffle(arr) {
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    function getRandomWrongAnswers(correct) {
+      const all = Object.values(sets).flat().map(q => q.a).filter(a => a !== correct);
+      return shuffle(all).slice(0, 3);
+    }
+  </script>
+</body>
+</html>
